@@ -2,7 +2,7 @@
 // Load Node modules
 const path = require('path')
 const events = require('events')
-// const fs = require('fs')
+const fs = require('fs')
 
 // Load electron modules
 const {app, Tray, BrowserWindow} = require('electron')
@@ -10,6 +10,8 @@ const {app, Tray, BrowserWindow} = require('electron')
 // Load helpers
 const Positioner = require('electron-positioner')
 const extend = require('extend')
+const yaml = require('js-yaml')
+const devMode = true
 
 // Create our menubar variable
 var menubar = new events.EventEmitter()
@@ -18,12 +20,13 @@ menubar.opts = {
   dir: app.getAppPath(),
   index: null, // Defaults to index.html
   showDockIcon: false,
-  width: 400,
-  height: 400,
+  width: (devMode) ? 1024 : 400,
+  height: (devMode) ? 1025 : 400,
   tooltip: 'Puppet Tray',
   icon: 'icons/pending.png',
   windowPosition: 'trayBottomCenter',
   icons: ['icons/complete.png', 'icons/failing.png', 'icons/pending.png'],
+  puppetFile: (devMode) ? 'data\\last_run_summary.yaml' : 'C:\\ProgramData\\PuppetLabs\\puppet\\cache\\state\\last_run_summary.yaml',
   showOnRightClick: false,
   alwaysOnTop: false
 }
@@ -91,6 +94,9 @@ menubar.createWindow = function () {
 
   var winOpts = extend(defaults, this.opts)
   this.window = new BrowserWindow(winOpts)
+  this.window.webContents.on('did-finish-load', () => {
+    this.window.webContents.send('ping', 'whoooooooh!')
+  })
 
   this.positioner = new Positioner(this.window)
 
@@ -153,22 +159,27 @@ menubar.app.on('ready', function () {
   this.tray.on(defaultClickEvent, this.clicked)
   this.tray.on('double-click', this.clicked)
 
-  // TODO: Set some type of context icon here as well.
-  // Check for update every minute.
-
+  // Grab latest
   setInterval(() => {
-    // TODO: Check the puppet file to see which icon it should show.
-    if (item === 0) {
-      item = 1
-    } else if (item === 1) {
-      item = 2
-    } else {
-      item = 0
+    try {
+      this.yaml = yaml.safeLoad(fs.readFileSync(this.opts.puppetFile, 'utf8'))
+      this.summary = {
+        lastRun: new Date(this.yaml.time.last_run * 1000)
+      }
+      global.sharedObj = { summary: this.summary }
+    } catch (e) {
+      item = 1 // failed
+      if (e.message.indexOf('ENOENT:') === 0) {
+        // File doesnt exist
+      } else {
+        // Unaccounted for error
+        console.log('Caught Error:', e.message)
+      }
     }
 
     // Update the icon
     this.tray.setImage(this.opts.icons[item])
-  }, 1000)
+  }, 1000) // TODO: Change to a minute 60000
 }.bind(menubar))
 
 // Handle events
@@ -178,7 +189,6 @@ menubar.on('hiding-window', (e) => {
 menubar.on('showing-window', (e) => {
   console.log('Event triggered: Showing window:', e)
 })
-
 menubar.on('file-set', (e) => {
   console.log('File changed!: ', e)
 })

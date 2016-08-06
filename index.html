@@ -1,13 +1,55 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <meta charset="UTF-8">
-    <title>Hello World!</title>
+    <meta charset='UTF-8'>
+    <title>Puppet Tray</title>
+    <script src='https://npmcdn.com/vue/dist/vue.js'></script>
+    <link rel='stylesheet' href='data/css/skeleton.css'>
   </head>
   <body>
-    <h1>Hello World!</h1>
-    We are using node <script>document.write(process.versions.node)</script>,
-    Chrome <script>document.write(process.versions.chrome)</script>,
-    and Electron <script>document.write(process.versions.electron)</script>.
+    <div id='app' class='container'>
+      <h3>{{computer}}</h3>
+      <hr>
+      <div class='row'>
+        <pre>Last ran {{info | json 4}}</pre>
+      </div>
+    </div>
+    <table class='u-full-width'>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Age</th>
+          <th>Sex</th>
+          <th>Location</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Dave Gamache</td>
+          <td>26</td>
+          <td>Male</td>
+          <td>San Francisco</td>
+        </tr>
+        <tr>
+          <td>Dwayne Johnson</td>
+          <td>42</td>
+          <td>Male</td>
+          <td>Hayward</td>
+        </tr>
+      </tbody>
+    </table>
+    <script>
+      const {remote} = require('electron')
+
+      new Vue({
+        el: '#app',
+        data: {
+          computer: process.env.COMPUTERNAME,
+          info: remote.getGlobal('sharedObj')
+        },
+      })
+
+      console.log('Remote:', remote.getGlobal('sharedObj'))
+    </script>
   </body>
 </html>
