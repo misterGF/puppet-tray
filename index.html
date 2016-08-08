@@ -5,51 +5,94 @@
     <title>Puppet Tray</title>
     <script src='https://npmcdn.com/vue/dist/vue.js'></script>
     <link rel='stylesheet' href='data/css/skeleton.css'>
+    <style>
+      hr {
+        margin-top: 10px;
+        margin-bottom: 20px;
+      }
+      h4 {
+        text-align: center;
+      }
+      .error {
+        color: red;
+      }
+      .centerText {
+        text-align: center;
+        word-wrap: break-word;
+      }
+      #statusIcon {
+        width: 1em;
+        padding-right: 1em;
+      }
+    </style>
   </head>
   <body>
     <div id='app' class='container'>
-      <h3>{{computer}}</h3>
+      <h4><img v-bind:src="summary.icon" alt="Puppet Status" id="statusIcon">{{computer}}</h4>
       <hr>
-      <div class='row'>
-        <pre>Last ran {{info | json 4}}</pre>
+
+      <h4 class='centerText'>Provisioning is {{summary.status}}</h4>
+      <p>Last ran: {{summary.lastRun}}</p>
+      <!-- Success -->
+      <div class='container' v-if="!summary.error">
+
+        <div class='row'>
+          <div class="six columns">
+            <button>CHANGED ({{summary.resources['changed']}})</button>
+          </div>
+          <div class="six columns">
+            <button>FAILED ({{summary.resources['failed']}})</button>
+          </div>
+        </div>
+
+        <div class='row'>
+          <div class="six columns">
+            <button>NOT SYNCED ({{summary.resources['out_of_sync']}})</button>
+          </div>
+          <div class="six columns">
+            <button>SKIPPED ({{summary.resources['skipped']}})</button>
+          </div>
+        </div>
+
+        <div class='row'>
+          <button>TOTAL ({{summary.resources['total']}})</button>
+        </div>
+      </div>
+
+      <!-- File Not Found -->
+      <div class='container' v-if="summary.error && summary.fileNotFound">
+        <p class='centerText'><b>Error</b>: {{summary.error}}</p>
+        <div class='u-max-full-width centerText'>
+          <img src="icons/empty-box.png" alt="File not found">
+        </div>
+      </div>
+
+      <!-- Error -->
+      <div class='container' v-if="summary.error && !summary.fileNotFound">
+        <p class='centerText'><b>Error</b>: {{summary.error}}</p>
+        <div class='u-max-full-width centerText'>
+          <img src="icons/error.png" alt="Error icon">
+        </div>
       </div>
     </div>
-    <table class='u-full-width'>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Age</th>
-          <th>Sex</th>
-          <th>Location</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>Dave Gamache</td>
-          <td>26</td>
-          <td>Male</td>
-          <td>San Francisco</td>
-        </tr>
-        <tr>
-          <td>Dwayne Johnson</td>
-          <td>42</td>
-          <td>Male</td>
-          <td>Hayward</td>
-        </tr>
-      </tbody>
-    </table>
     <script>
       const {remote} = require('electron')
-
-      new Vue({
+      let summary = remote.getGlobal('summary')
+      let screen = new Vue({
         el: '#app',
         data: {
           computer: process.env.COMPUTERNAME,
-          info: remote.getGlobal('sharedObj')
-        },
+          summary: summary
+        }
       })
 
-      console.log('Remote:', remote.getGlobal('sharedObj'))
+      // Refresh summary
+      var refreshSummary = setInterval(() => {
+        console.log('calling get summary')
+        summary = remote.getGlobal('summary')
+      }, 1000)
+
+      console.log('Remote:', summary)
     </script>
   </body>
 </html>

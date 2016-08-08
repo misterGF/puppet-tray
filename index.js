@@ -20,15 +20,15 @@ menubar.opts = {
   dir: app.getAppPath(),
   index: null, // Defaults to index.html
   showDockIcon: false,
-  width: (devMode) ? 1024 : 400,
-  height: (devMode) ? 1025 : 400,
+  width: 600,
+  height: 400,
   tooltip: 'Puppet Tray',
   icon: 'icons/pending.png',
   windowPosition: 'trayBottomCenter',
   icons: ['icons/complete.png', 'icons/failing.png', 'icons/pending.png'],
   puppetFile: (devMode) ? 'data\\last_run_summary.yaml' : 'C:\\ProgramData\\PuppetLabs\\puppet\\cache\\state\\last_run_summary.yaml',
   showOnRightClick: false,
-  alwaysOnTop: false
+  alwaysOnTop: (devMode)
 }
 
 // Clicked Function
@@ -89,15 +89,13 @@ menubar.createWindow = function () {
   this.emit('create-window')
   var defaults = {
     show: false,
-    frame: false
+    frame: false,
+    autoHideMenuBar: true
   }
 
   var winOpts = extend(defaults, this.opts)
+  console.log('winOpts', winOpts)
   this.window = new BrowserWindow(winOpts)
-  this.window.webContents.on('did-finish-load', () => {
-    this.window.webContents.send('ping', 'whoooooooh!')
-  })
-
   this.positioner = new Positioner(this.window)
 
   this.window.on('blur', function () {
@@ -136,7 +134,8 @@ menubar.emitBlur = function () {
 // Ready function
 menubar.app.on('ready', function () {
   // Set our icon
-  let item = 0
+  let item = 2
+  let status = 'pending'
   this.tray = new Tray(this.opts.icons[item])
 
   // Disable dock icon
@@ -163,22 +162,53 @@ menubar.app.on('ready', function () {
   setInterval(() => {
     try {
       this.yaml = yaml.safeLoad(fs.readFileSync(this.opts.puppetFile, 'utf8'))
+      let timestamp = new Date(this.yaml.time.last_run * 1000)
+      let lastRun = timestamp.toLocaleString()
+
       this.summary = {
-        lastRun: new Date(this.yaml.time.last_run * 1000)
+        lastRun: lastRun,
+        resources: {
+          changed: this.yaml.resources.changed,
+          failed: this.yaml.resources.failed,
+          out_of_sync: this.yaml.resources.out_of_sync,
+          skipped: this.yaml.resources.skipped,
+          total: this.yaml.resources.total
+        }
       }
-      global.sharedObj = { summary: this.summary }
+
+      // Determine proper icon
+      if (this.summary.resources.changed || this.summary.resources.out_of_sync || this.summary.resources.skipped) {
+        item = 2
+        status = 'pending'
+      } else if (this.summary.resources.failed) {
+        item = 1
+        status = 'failing'
+      } else {
+        item = 0
+        status = 'synced'
+      }
     } catch (e) {
       item = 1 // failed
+      status = 'failing'
+
       if (e.message.indexOf('ENOENT:') === 0) {
         // File doesnt exist
+        console.log('File does not exist')
+        global.summary = { error: `File does not exist. Looking for ${this.opts.puppetFile}.`, fileNotFound: true }
       } else {
         // Unaccounted for error
         console.log('Caught Error:', e.message)
+        global.summary = { error: e.message }
       }
     }
 
     // Update the icon
     this.tray.setImage(this.opts.icons[item])
+
+    // Send data to Browser
+    this.summary.icon = this.opts.icons[item]
+    this.summary.status = status
+    global.summary = this.summary
   }, 1000) // TODO: Change to a minute 60000
 }.bind(menubar))
 
