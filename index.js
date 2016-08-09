@@ -11,7 +11,15 @@ const {app, Tray, BrowserWindow} = require('electron')
 const Positioner = require('electron-positioner')
 const extend = require('extend')
 const yaml = require('js-yaml')
-const devMode = true
+const minimist = require('minimist')
+
+// Parse for any passed in values
+let passedArgs = minimist(process.argv.slice(2))
+const devMode = (passedArgs.devMode) ? passedArgs.devMode : false
+
+if (devMode) {
+  console.log('In Dev Mode')
+}
 
 // Create our menubar variable
 var menubar = new events.EventEmitter()
@@ -24,9 +32,9 @@ menubar.opts = {
   width: 600,
   height: 400,
   tooltip: 'Puppet Tray',
-  icon: 'icons/puppet-tray.png',
+  icon: path.join(__dirname, 'icons/puppet-tray.png'),
   windowPosition: 'trayBottomCenter',
-  icons: ['icons/complete.png', 'icons/failing.png', 'icons/pending.png'],
+  icons: [path.join(__dirname, 'icons/complete.png'), path.join(__dirname, 'icons/failing.png'), path.join(__dirname, 'icons/pending.png')],
   puppetFile: (devMode) ? 'data\\last_run_summary.yaml' : 'C:\\ProgramData\\PuppetLabs\\puppet\\cache\\state\\last_run_summary.yaml',
   showOnRightClick: false,
   alwaysOnTop: (devMode)
@@ -99,7 +107,7 @@ menubar.createWindow = function () {
   this.positioner = new Positioner(this.window)
 
   this.window.on('blur', function () {
-    this.opts.alwaysOnTop ? this.emitBlur() : this.hideWindow()
+    this.opts.alwaysOnTop ? this.emitBlur() : this.windowClear()
   }.bind(this))
 
   if (this.opts.showOnAllWorkspaces !== false) {
@@ -160,7 +168,7 @@ menubar.app.on('ready', function () {
   menubar.getStats()
 
   // Schedule our updates
-  setInterval(menubar.getStats.bind(this), 30000)
+  setInterval(menubar.getStats.bind(this), menubar.opts.refreshRate)
 }.bind(menubar))
 
 // Get status

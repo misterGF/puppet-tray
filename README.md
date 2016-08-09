@@ -1,4 +1,4 @@
-# Puppet Tray
+# WIP: Puppet Tray
 ---
 This electron task bar app is meant to give you a quick glimpse of where Puppet is at with its provisioning.
 The color of the icon will tell you if it is completed, pending or failed.
@@ -19,7 +19,11 @@ You can download the executable [here](http://github.com/misterGF/puppet-tray/v1
 ---
 
 ## Contribute
-Pull requests are welcome.
+Pull requests are welcome. Make sure you have Electron installed.
+
+```bash
+  npm i -g electron-prebuild
+```
 
 - JavaScript Standard Code Style required.
 - Mocha test required for new features.
