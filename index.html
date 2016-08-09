@@ -34,11 +34,11 @@
       <h4><img v-bind:src="summary.icon" alt="Puppet Status" id="statusIcon">{{computer}}</h4>
       <hr>
 
-      <h4 class='centerText'>Provisioning is {{summary.status}}</h4>
-      <p>Last ran: {{summary.lastRun}}</p>
       <!-- Success -->
       <div class='container' v-if="!summary.error">
-
+        <h4 class='centerText'>Provisioning is {{summary.status}}</h4>
+        <p>Last ran: {{summary.lastRun}}</p>
+        
         <div class='row'>
           <div class="six columns">
             <button class='fullWidth'>CHANGED ({{summary.resources['changed']}})</button>
@@ -86,11 +86,12 @@
     <script>
       const {remote} = require('electron')
       let summary = remote.getGlobal('summary')
-      let screen = new Vue({
+      let dashboard = new Vue({
         el: '#app',
         data: {
           devMode: true,
-          summary: summary
+          summary: summary,
+          refreshRate: 6000
         },
         computed: {
           computer: function () {
@@ -101,11 +102,11 @@
 
       // Refresh summary
       var refreshSummary = setInterval(() => {
-        screen.summary = remote.getGlobal('summary')
-        console.log('called get summary', screen.summary)
-      }, 1000)
+        dashboard.summary = remote.getGlobal('summary')
+        console.log('Called get summary', dashboard.summary)
+      }, dashboard.refreshRate)
 
-      console.log('Remote:', summary)
+      console.log('Remote info:', summary)
     </script>
   </body>
 </html>

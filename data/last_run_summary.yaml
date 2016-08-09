@@ -9,7 +9,7 @@ resources:
   out_of_sync: 0
   restarted: 0
   scheduled: 0
-  skipped: 30
+  skipped: 0
   total: 2130
 time:
   config_retrieval: 4.016207

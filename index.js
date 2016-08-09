@@ -19,11 +19,12 @@ menubar.app = app
 menubar.opts = {
   dir: app.getAppPath(),
   index: null, // Defaults to index.html
+  refreshRate: 60000, // One minute
   showDockIcon: false,
   width: 600,
   height: 400,
   tooltip: 'Puppet Tray',
-  icon: 'icons/pending.png',
+  icon: 'icons/puppet-tray.png',
   windowPosition: 'trayBottomCenter',
   icons: ['icons/complete.png', 'icons/failing.png', 'icons/pending.png'],
   puppetFile: (devMode) ? 'data\\last_run_summary.yaml' : 'C:\\ProgramData\\PuppetLabs\\puppet\\cache\\state\\last_run_summary.yaml',
@@ -133,9 +134,7 @@ menubar.emitBlur = function () {
 // Ready function
 menubar.app.on('ready', function () {
   // Set our icon
-  let item = 2
-  let status = 'pending'
-  this.tray = new Tray(this.opts.icons[item])
+  this.tray = new Tray(this.opts.icon)
 
   // Disable dock icon
   if (app.dock && !this.opts.showDockIcon) app.dock.hide()
@@ -158,67 +157,81 @@ menubar.app.on('ready', function () {
   this.tray.on('double-click', this.clicked)
 
   // Grab latest
-  setInterval(() => {
-    try {
-      this.yaml = yaml.safeLoad(fs.readFileSync(this.opts.puppetFile, 'utf8'))
-      let timestamp = new Date(this.yaml.time.last_run * 1000)
-      let lastRun = timestamp.toLocaleString()
+  menubar.getStats()
 
-      this.summary = {
-        lastRun: lastRun,
-        resources: {
-          changed: this.yaml.resources.changed,
-          failed: this.yaml.resources.failed,
-          out_of_sync: this.yaml.resources.out_of_sync,
-          skipped: this.yaml.resources.skipped,
-          scheduled: this.yaml.resources.scheduled,
-          total: this.yaml.resources.total
-        }
-      }
+  // Schedule our updates
+  setInterval(menubar.getStats.bind(this), 30000)
+}.bind(menubar))
 
-      // Determine proper icon
-      if (this.summary.resources.changed || this.summary.resources.out_of_sync || this.summary.resources.skipped) {
-        item = 2
-        status = 'pending'
-      } else if (this.summary.resources.failed) {
-        item = 1
-        status = 'failing'
-      } else {
-        item = 0
-        status = 'synced'
-      }
-    } catch (e) {
-      item = 1 // failed
-      status = 'failing'
+// Get status
+menubar.getStats = function () {
+  // Define some defaults
+  let item = 2
+  let status = null
 
-      if (e.message.indexOf('ENOENT:') === 0) {
-        // File doesnt exist
-        console.log('File does not exist')
-        global.summary = { error: `File does not exist. Looking for ${this.opts.puppetFile}.`, fileNotFound: true }
-      } else {
-        // Unaccounted for error
-        console.log('Caught Error:', e.message)
-        global.summary = { error: e.message }
+  try {
+    this.yaml = yaml.safeLoad(fs.readFileSync(this.opts.puppetFile, 'utf8'))
+    let timestamp = new Date(this.yaml.time.last_run * 1000)
+    let lastRun = timestamp.toLocaleString()
+
+    this.summary = {
+      lastRun: lastRun,
+      resources: {
+        changed: this.yaml.resources.changed,
+        failed: this.yaml.resources.failed,
+        out_of_sync: this.yaml.resources.out_of_sync,
+        skipped: this.yaml.resources.skipped,
+        scheduled: this.yaml.resources.scheduled,
+        total: this.yaml.resources.total
       }
     }
 
-    // Update the icon
-    this.tray.setImage(this.opts.icons[item])
+    // Determine proper icon
+    if (this.summary.resources.changed || this.summary.resources.out_of_sync || this.summary.resources.skipped || this.summary.resources.scheduled) {
+      item = 2
+      status = 'pending'
+    } else if (this.summary.resources.failed) {
+      item = 1
+      status = 'failing'
+    } else {
+      item = 0
+      status = 'synced'
+    }
 
-    // Send data to Browser
     this.summary.icon = this.opts.icons[item]
     this.summary.status = status
+
+    // Send data to Browser
     global.summary = this.summary
-  }, 1000) // TODO: Change to a minute 60000
-}.bind(menubar))
+  } catch (e) {
+    item = 1 // failed
+    status = 'failing'
+
+    if (e.message && e.message.indexOf('ENOENT:') === 0) {
+      // File doesnt exist
+      console.log('File does not exist', new Date())
+      global.summary = { error: `File does not exist. Looking for ${this.opts.puppetFile}.`, fileNotFound: true, icon: this.opts.icons[item] }
+    } else {
+      // Unaccounted for error
+      console.log('Caught Error:', e)
+      global.summary = {
+        error: (e.message) ? e.message : e,
+        icon: this.opts.icons[item]
+      }
+    }
+  }
+
+  // Update the icon
+  this.tray.setImage(this.opts.icons[item])
+}
 
 // Handle events
-menubar.on('hiding-window', (e) => {
-  console.log('Event triggered: Hiding window:', e)
+menubar.on('hiding-window', () => {
+  console.log('Event triggered: Hiding window.')
 })
-menubar.on('showing-window', (e) => {
-  console.log('Event triggered: Showing window:', e)
+menubar.on('showing-window', () => {
+  console.log('Event triggered: Showing window.')
 })
 menubar.on('file-set', (e) => {
-  console.log('File changed!: ', e)
+  console.log('Event triggered: File changed: ', e)
 })
