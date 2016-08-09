@@ -24,6 +24,9 @@
         width: 1em;
         padding-right: 1em;
       }
+      .fullWidth {
+        width: 100%;
+      }
     </style>
   </head>
   <body>
@@ -38,24 +41,29 @@
 
         <div class='row'>
           <div class="six columns">
-            <button>CHANGED ({{summary.resources['changed']}})</button>
+            <button class='fullWidth'>CHANGED ({{summary.resources['changed']}})</button>
           </div>
           <div class="six columns">
-            <button>FAILED ({{summary.resources['failed']}})</button>
+            <button class='fullWidth'>FAILED ({{summary.resources['failed']}})</button>
           </div>
         </div>
 
         <div class='row'>
           <div class="six columns">
-            <button>NOT SYNCED ({{summary.resources['out_of_sync']}})</button>
+            <button class='fullWidth'>NOT SYNCED ({{summary.resources['out_of_sync']}})</button>
           </div>
           <div class="six columns">
-            <button>SKIPPED ({{summary.resources['skipped']}})</button>
+            <button class='fullWidth'>SKIPPED ({{summary.resources['skipped']}})</button>
           </div>
         </div>
 
         <div class='row'>
-          <button>TOTAL ({{summary.resources['total']}})</button>
+          <div class="six columns">
+            <button class='fullWidth'>SCHEDULED ({{summary.resources['scheduled']}})</button>
+          </div>
+          <div class="six columns">
+            <button class='fullWidth'>TOTAL ({{summary.resources['total']}})</button>
+          </div>
         </div>
       </div>
 
@@ -81,15 +89,20 @@
       let screen = new Vue({
         el: '#app',
         data: {
-          computer: process.env.COMPUTERNAME,
+          devMode: true,
           summary: summary
+        },
+        computed: {
+          computer: function () {
+            return (this.devMode) ? 'devbox-gf' : process.env.COMPUTERNAME
+          }
         }
       })
 
       // Refresh summary
       var refreshSummary = setInterval(() => {
-        console.log('calling get summary')
-        summary = remote.getGlobal('summary')
+        screen.summary = remote.getGlobal('summary')
+        console.log('called get summary', screen.summary)
       }, 1000)
 
       console.log('Remote:', summary)

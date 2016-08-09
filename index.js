@@ -94,7 +94,6 @@ menubar.createWindow = function () {
   }
 
   var winOpts = extend(defaults, this.opts)
-  console.log('winOpts', winOpts)
   this.window = new BrowserWindow(winOpts)
   this.positioner = new Positioner(this.window)
 
@@ -172,6 +171,7 @@ menubar.app.on('ready', function () {
           failed: this.yaml.resources.failed,
           out_of_sync: this.yaml.resources.out_of_sync,
           skipped: this.yaml.resources.skipped,
+          scheduled: this.yaml.resources.scheduled,
           total: this.yaml.resources.total
         }
       }

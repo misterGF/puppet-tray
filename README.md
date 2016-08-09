@@ -1,7 +1,25 @@
 # Puppet Tray
 ---
-This electron task bar app is meant to give you a quick way to see where Puppet is at in its progress.
-The color of the icon will tell you if it is completed, in progress or failed.
+This electron task bar app is meant to give you a quick glimpse of where Puppet is at with its provisioning.
+The color of the icon will tell you if it is completed, pending or failed.
 
-Click on the icon and you will get more information. The information is pulled from C:\ProgramData\PuppetLabs\puppet\cache\state\last_run_summary.yaml
-Currently only for windows.
+Click on the icon and you will get more information.
+
+![Puppet tray screenshot](http://res.cloudinary.com/gatec21/image/upload/v1470756092/puppet-tray_jichun.png)
+
+The information is pulled from
+
+```bash
+  C:\ProgramData\PuppetLabs\puppet\cache\state\last_run_summary.yaml
+```
+
+Currently only supported on windows.
+You can download the executable [here](http://github.com/misterGF/puppet-tray/v1).
+
+---
+
+## Contribute
+Pull requests are welcome.
+
+- JavaScript Standard Code Style required.
+- Mocha test required for new features.
