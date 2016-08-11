@@ -14,7 +14,7 @@ The information is pulled from
 ```
 
 Currently only supported on windows.
-You can download the executable [here](http://github.com/misterGF/puppet-tray/v1).
+You can download the executable [here](https://github.com/misterGF/puppet-tray/releases).
 
 ---
 
