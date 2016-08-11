@@ -1,4 +1,4 @@
-# WIP: Puppet Tray
+# Puppet Tray
 ---
 This electron task bar app is meant to give you a quick glimpse of where Puppet is at with its provisioning.
 The color of the icon will tell you if it is completed, pending or failed.
