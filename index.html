@@ -38,7 +38,7 @@
       <div class='container' v-if="!summary.error">
         <h4 class='centerText'>Provisioning is {{summary.status}}</h4>
         <p>Last ran: {{summary.lastRun}}</p>
-        
+
         <div class='row'>
           <div class="six columns">
             <button class='fullWidth'>CHANGED ({{summary.resources['changed']}})</button>
@@ -89,7 +89,7 @@
       let dashboard = new Vue({
         el: '#app',
         data: {
-          devMode: true,
+          devMode: false,
           summary: summary,
           refreshRate: 6000
         },
