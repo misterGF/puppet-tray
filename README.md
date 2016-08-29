@@ -22,7 +22,7 @@ You can download the executable [here](https://github.com/misterGF/puppet-tray/r
 Pull requests are welcome. Make sure you have Electron installed.
 
 ```bash
-  npm i -g electron-prebuild
+  npm i -g electron-prebuilt
 ```
 
 - JavaScript Standard Code Style required.
