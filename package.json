@@ -4,6 +4,7 @@
   "description": "View Puppet last run status from your tray menu.",
   "main": "index.js",
   "dependencies": {
+    "electron": "^1.3.4",
     "electron-positioner": "^3.0.0",
     "extend": "^3.0.0",
     "js-yaml": "^3.6.1",
@@ -25,6 +26,7 @@
     "spectron": "^3.3.0"
   },
   "scripts": {
+    "script": "electron .",
     "test": "electron-mocha test/*.test.js",
     "build:packager": "electron-packager ./ puppet-tray --platform=win32 --arch=all --icon=./icons/puppet-tray.ico --prune=true --out=dist/ --overwrite",
     "clean": "rmdir dist /s /q"
