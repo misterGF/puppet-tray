@@ -130,7 +130,7 @@ menubar.hideWindow = function () {
 
 // Clear window function
 menubar.windowClear = function () {
-  delete this.window
+  // delete this.window
   this.emit('after-close')
 }.bind(menubar)
 
