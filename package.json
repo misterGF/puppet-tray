@@ -1,6 +1,6 @@
 {
   "name": "puppet-tray",
-  "version": "0.0.1",
+  "version": "0.0.5",
   "description": "View Puppet last run status from your tray menu.",
   "main": "index.js",
   "dependencies": {
