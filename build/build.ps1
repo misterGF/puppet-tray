@@ -25,6 +25,9 @@ try {
     $Shortcut.TargetPath = $TargetFile
     $Shortcut.Save()
 
+    # Enable notifications area to always show
+    invoke-expression {  TrayManager.exe -t "Puppet Tray" 2 }
+    
     Write-Output 'Setup complete!'
   }
 } catch {
