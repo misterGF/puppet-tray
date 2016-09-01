@@ -23,6 +23,7 @@ if (devMode) {
 
 // Create our menubar variable
 var menubar = new events.EventEmitter()
+menubar.window = null
 menubar.app = app
 menubar.opts = {
   dir: app.getAppPath(),
@@ -42,30 +43,93 @@ menubar.opts = {
 
 // Clicked Function
 menubar.clicked = function (e, bounds) {
-  // Clicked functions
+  // this is equal to Tray object.
+
   if (e.altKey || e.shiftKey || e.ctrlKey || e.metaKey) {
-    this.emit('hiding-window')
-    return this.hideWindow() // Hide window when these keys are clicked
+    menubar.emit('hiding-window')
+  } else if (menubar.window) {
+    menubar.emit('clear-window', 'from clicked')
+  } else {
+    let cachedBounds = bounds || cachedBounds
+    menubar.emit('create-window', cachedBounds)
+  }
+}
+
+// Ready function
+menubar.app.on('ready', function () {
+  // this is equal to app here.
+  // Set our icon
+  this.tray = new Tray(menubar.opts.icon)
+
+  // Disable dock icon
+  if (app.dock && !menubar.opts.showDockIcon) app.dock.hide()
+
+  // Ensure proper path
+  if (!(path.isAbsolute(menubar.opts.dir))) {
+    menubar.opts.dir = path.resolve(menubar.opts.dir)
   }
 
-  if (this.window) {
-    this.emit('clear-window')
-    return this.windowClear() // Hide menu if it is open
+  if (!menubar.opts.index) {
+    menubar.opts.index = 'file://' + path.join(menubar.opts.dir, 'index.html')
+    menubar.emit('file-set', menubar.opts.index)
   }
+  // Define click events
+  var defaultClickEvent = menubar.opts.showOnRightClick ? 'right-click' : 'click'
 
-  let cachedBounds = bounds || cachedBounds
-  this.showWindow(cachedBounds)
-}.bind(menubar)
+  // Register events
+  this.tray.setToolTip(menubar.opts.tooltip)
+  this.tray.on(defaultClickEvent, menubar.clicked)
+  this.tray.on('double-click', menubar.clicked)
 
-// Show window function
-menubar.showWindow = function (trayPos) {
+  // Add tray to menubar
+  menubar.tray = this.tray
+
+  // Grab latest
+  menubar.emit('get-latest')
+
+  // Schedule our updates
+  setInterval(function () {
+    menubar.emit('get-latest')
+  }, menubar.opts.refreshRate)
+})
+
+// Handle events
+menubar.on('create-window', function (cachedBounds) {
+  console.log('Event: Creating window.')
+  this.emit('show-window', cachedBounds)
+})
+
+menubar.on('show-window', function (trayPos) {
+  // Create window if it doesn't exist
   if (!this.window) {
-    this.createWindow()
+    var defaults = {
+      show: false,
+      frame: false,
+      autoHideMenuBar: true
+    }
+
+    var winOpts = extend(defaults, this.opts)
+    this.window = new BrowserWindow(winOpts)
+    this.positioner = new Positioner(this.window)
+
+    this.window.on('blur', function () {
+      menubar.opts.alwaysOnTop ? menubar.emit('log-message', 'Lost focus') : menubar.emit('hiding-window', 'from blur')
+    })
+
+    if (this.opts.showOnAllWorkspaces !== false) {
+      this.window.setVisibleOnAllWorkspaces(true)
+    }
+
+    this.window.on('close', function () {
+      menubar.emit('clear-window', 'from close')
+    })
+
+    this.window.loadURL(this.opts.index)
   }
 
+  // Prepare window to be shown
   this.emit('showing-window')
   let cachedBounds
-
   if (trayPos && trayPos.x !== 0) {
     // Cache the bounds
     cachedBounds = trayPos
@@ -90,89 +154,26 @@ menubar.showWindow = function (trayPos) {
 
   this.window.setPosition(x, y)
   this.window.show()
+
+  // Window shown
   this.emit('after-show')
-}.bind(menubar)
+})
 
-// Create window function
-menubar.createWindow = function () {
-  this.emit('create-window')
-  var defaults = {
-    show: false,
-    frame: false,
-    autoHideMenuBar: true
-  }
+menubar.on('hiding-window', function () {
+  console.log('Event: Hiding window.')
 
-  var winOpts = extend(defaults, this.opts)
-  this.window = new BrowserWindow(winOpts)
-  this.positioner = new Positioner(this.window)
-
-  this.window.on('blur', function () {
-    this.opts.alwaysOnTop ? this.emitBlur() : this.windowClear()
-  }.bind(this))
-
-  if (this.opts.showOnAllWorkspaces !== false) {
-    this.window.setVisibleOnAllWorkspaces(true)
-  }
-
-  this.window.on('close', this.windowClear)
-  this.window.loadURL(this.opts.index)
-  this.emit('after-create-window')
-}.bind(menubar)
-
-// Hide window function
-menubar.hideWindow = function () {
   if (!this.window) return
 
-  this.emit('hide')
   this.window.hide()
   this.emit('after-hide')
-}.bind(menubar)
+})
 
-// Clear window function
-menubar.windowClear = function () {
-  // delete this.window
-  this.emit('after-close')
-}.bind(menubar)
+menubar.on('clear-window', function (from) {
+  delete this.window
+  console.log(`Event: Window cleared - ${from}`)
+})
 
-// Emit blur event
-menubar.emitBlur = function () {
-  this.emit('focus-lost')
-}.bind(menubar)
-
-// Ready function
-menubar.app.on('ready', function () {
-  // Set our icon
-  this.tray = new Tray(this.opts.icon)
-
-  // Disable dock icon
-  if (app.dock && !this.opts.showDockIcon) app.dock.hide()
-
-  // Ensure proper path
-  if (!(path.isAbsolute(this.opts.dir))) {
-    this.opts.dir = path.resolve(this.opts.dir)
-  }
-
-  if (!this.opts.index) {
-    this.opts.index = 'file://' + path.join(this.opts.dir, 'index.html')
-    this.emit('file-set', this.opts.index)
-  }
-  // Define click events
-  var defaultClickEvent = this.opts.showOnRightClick ? 'right-click' : 'click'
-
-  // Register events
-  this.tray.setToolTip(this.opts.tooltip)
-  this.tray.on(defaultClickEvent, this.clicked)
-  this.tray.on('double-click', this.clicked)
-
-  // Grab latest
-  menubar.getStats()
-
-  // Schedule our updates
-  setInterval(menubar.getStats.bind(this), menubar.opts.refreshRate)
-}.bind(menubar))
-
-// Get status
-menubar.getStats = function () {
+menubar.on('get-latest', function () {
   // Define some defaults
   let item = 2
   let status = null
@@ -195,12 +196,12 @@ menubar.getStats = function () {
     }
 
     // Determine proper icon
-    if (this.summary.resources.changed || this.summary.resources.out_of_sync || this.summary.resources.skipped || this.summary.resources.scheduled) {
-      item = 2
-      status = 'pending'
-    } else if (this.summary.resources.failed) {
+    if (this.summary.resources.failed) {
       item = 1
       status = 'failing'
+    } else if (this.summary.resources.changed || this.summary.resources.out_of_sync || this.summary.resources.skipped || this.summary.resources.scheduled) {
+      item = 2
+      status = 'pending'
     } else {
       item = 0
       status = 'synced'
@@ -231,15 +232,25 @@ menubar.getStats = function () {
 
   // Update the icon
   this.tray.setImage(this.opts.icons[item])
-}
+})
 
-// Handle events
-menubar.on('hiding-window', () => {
-  console.log('Event triggered: Hiding window.')
+// Info events
+menubar.on('showing-window', function () {
+  console.log('Event: Showing window.')
 })
-menubar.on('showing-window', () => {
-  console.log('Event triggered: Showing window.')
+
+menubar.on('after-show', function () {
+  console.log('Event: Window shown.')
 })
-menubar.on('file-set', (e) => {
-  console.log('Event triggered: File changed: ', e)
+
+menubar.on('file-set', function (e) {
+  console.log('Event: File changed - ', e)
+})
+
+menubar.on('after-hide', function (e) {
+  console.log('Event: Window hidden')
+})
+
+menubar.on('log-message', function (message) {
+  console.log(`Event: Message - ${message}`)
 })
