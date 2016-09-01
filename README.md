@@ -15,7 +15,8 @@ The information is pulled from
 
 Currently only supported on windows.
 You can download the executable [here](https://github.com/misterGF/puppet-tray/releases).
-To install/configure unzip the file and run the build.ps1 PowerShell script. 
+To install/configure unzip the file and run the build.ps1 PowerShell script.
+
 ---
 
 ## Contribute
