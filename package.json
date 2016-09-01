@@ -29,7 +29,7 @@
   "scripts": {
     "electron": "electron .",
     "test": "electron-mocha test/*.test.js",
-    "build:packager": "electron-packager ./ puppet-tray --platform=win32 --arch=all --icon=./icons/puppet-tray.ico --prune=true --out=dist/ --overwrite",
+    "build": "electron-packager ./ puppet-tray --platform=win32 --arch=x64 --icon=./icons/puppet-tray.ico --prune=true --out=dist/ --overwrite",
     "clean": "rmdir dist /s /q"
   },
   "author": "Gil Ferreira <gfgilly@gmail.com>",
