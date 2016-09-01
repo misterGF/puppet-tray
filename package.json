@@ -1,6 +1,6 @@
 {
   "name": "puppet-tray",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "View Puppet last run status from your tray menu.",
   "main": "index.js",
   "dependencies": {
@@ -26,7 +26,7 @@
     "spectron": "^3.3.0"
   },
   "scripts": {
-    "script": "electron .",
+    "electron": "electron .",
     "test": "electron-mocha test/*.test.js",
     "build:packager": "electron-packager ./ puppet-tray --platform=win32 --arch=all --icon=./icons/puppet-tray.ico --prune=true --out=dist/ --overwrite",
     "clean": "rmdir dist /s /q"
