@@ -26,10 +26,8 @@ try {
     $Shortcut.Save()
 
     # Enable notifications area to always show
-    Invoke-Command { .\TrayManager.exe -t "Puppet Tray" 2 }
+    invoke-expression {  TrayManager.exe -t "Puppet Tray" 2 }
 
-    # Start app
-    Start-Process .\puppet-tray.exe -PassThru -RedirectStandardOutput $false | Out-Null
     Write-Output 'Setup complete!'
   }
 } catch {
